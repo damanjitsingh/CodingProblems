@@ -1,6 +1,7 @@
 package com.codingpatterns;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class ModifiedBinarySearch {
 
@@ -212,6 +213,86 @@ public class ModifiedBinarySearch {
         }
         return res;
     }
+    
+    /****************************************************************************************************************************/
+    /**
+     * Check in O(logn) time if a number is present in a list of integers.
+     * Does this really has O(logn) time complexity?
+     * @param l
+     * @param sIndex
+     * @param eIndex
+     * @param val
+     * @return
+     */
+    public static boolean checkPresence(List<Integer> l , int sIndex, int eIndex, int val) {
+         if (sIndex > eIndex) return false;
+         if (sIndex == eIndex) {
+             return l.get(sIndex) == val;
+         }
+
+         int mid = sIndex + (eIndex - sIndex)/2;
+         if (checkPresence(l, sIndex, mid, val)) {
+             return true;
+         } else {
+             return checkPresence(l,mid+1, eIndex, val);
+         }
+    }
+
+    /****************************************************************************************************************************/
+    /**
+     * Given a sorted integer array, nums, and an integer value, target, the array is rotated by some arbitrary number.
+     * Search and return the index of target in this array. If the target does not exist, return -1.
+     * Example: orgArr = {1,2,3,4,5,6,7}
+     * rotArr = {6,7,1,2,3,4}
+     * res for target=2 is 3
+     * The idea we will use here is:
+     * You may notice that at least one half of the array is always sorted—if the array is rotated by less than half the length of the array,
+     * at least the second half of the array will still be sorted. Contrarily, if the array is rotated by more than half the length of the array,
+     * then at least the first half of the array will be sorted. We can use this property to our advantage and modify the binarySearch function as
+     * follows:
+     * If the target value lies within the sorted half of the array, our problem is a basic binary search.
+     * Otherwise, discard the sorted half and keep examining the unsorted half.
+     * @param nums
+     * @param target
+     * @return
+     */
+    public static int binarySearchRotated(List<Integer> nums, int target) {
+        int start = 0;
+        int end = nums.size()-1;
+
+        while (start <= end) {
+            int mid = start + (end - start)/2;
+            if (nums.get(mid) == target) {
+                return mid;
+            }
+            if (nums.get(start) < nums.get(mid)) {
+                // first half is sorted
+                if (nums.get(start) <= target && target < nums.get(mid)) {
+                    // check if target lies in the sorted first half
+                    end = mid-1;
+                } else {
+                    // move your search to the unsorted half
+                    start = mid+1;
+                }
+            } else {
+                // last half should be sorted
+                if (nums.get(mid) < target && target <= nums.get(end)) {
+                    // check if target lies in the sorted second half
+                    start = mid+1;
+                } else {
+                    // move your search to the unsorted half
+                    end = mid-1;
+                }
+            }
+        }
+        return -1;
+    }
+
+    /****************************************************************************************************************************/
+    /**
+     * [1,1,2,2,3,3,4,4,5]
+     * [1,1,2,2,3,3,4]
+     */
 
     /****************************************************************************************************************************/
     public static void main(String[] args) {
@@ -221,13 +302,14 @@ public class ModifiedBinarySearch {
         System.out.println(ModifiedBinarySearch.findIndex(new int[] {10,6,4}, 1));
         System.out.println(ModifiedBinarySearch.findIndex(new int[] {10,6,4,3,1,1,1,1,1}, 1));
         System.out.println(ModifiedBinarySearch.findIndex(new int[] {1,1,1,1,1}, 1));
-        
+        */
         
         System.out.println(ModifiedBinarySearch.findCeilingIndex(new int[] {4,6,10}, 12));
         System.out.println(ModifiedBinarySearch.findCeilingIndex(new int[] {4,6,10}, 6));
         System.out.println(ModifiedBinarySearch.findCeilingIndex(new int[] {4,6,10}, 8));
         System.out.println(ModifiedBinarySearch.findCeilingIndex(new int[] {1,2,3,4,5,6,15,20}, 11));
         
+        /*
         System.out.println(Arrays.toString(ModifiedBinarySearch.findRange(new int[] {10,6,4,3,1,1,1,1,1}, 1)));
         System.out.println(Arrays.toString(ModifiedBinarySearch.findRange(new int[] {10,6,4,3,1,1,1,1,1}, -1)));
         System.out.println(Arrays.toString(ModifiedBinarySearch.findRange(new int[] {10,6,4,3,1,1,1,1,1}, 10)));
@@ -239,8 +321,17 @@ public class ModifiedBinarySearch {
         System.out.println(ModifiedBinarySearch.search(reader, 9));
         */
 
+        /*
         System.out.println(minDiff(new int[] {4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30}, 32));
         System.out.println(minDiff(new int[] {4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30}, 13));
+
+        List<Integer> list = Arrays.asList(new Integer[] {4,5,9,1,3,88,77,55,33,99});
+        System.out.println(ModifiedBinarySearch.checkPresence(list, 0, list.size()-1, 5));
+        System.out.println(ModifiedBinarySearch.checkPresence(list, 0, list.size()-1, 33));
+        System.out.println(ModifiedBinarySearch.checkPresence(list, 0, list.size()-1, 2));
+        */
+
+        System.out.println(ModifiedBinarySearch.binarySearchRotated(Arrays.asList(6,7,1,2,3,4,5), 7));
     }
 
 }

@@ -2,6 +2,7 @@ package com.codingpatterns;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -106,7 +107,7 @@ public class TwoHeaps {
 
     /*****************************************************************************************************/
     /**
-     * Remeber below properties when defining heap using an array.
+     * Remember below properties when defining heap using an array.
      * -> the last parent element will be at (n-1)/2th position of the array
      * -> for a node at position k, its left child will be at 2k+1 and its right
      * child will be at 2k+2 index
@@ -286,8 +287,88 @@ public class TwoHeaps {
     }
 
     /*****************************************************************************************************/
-    
-    
+    /**
+     * Given an array that has projects requiring a given amount of money to invest called capital and an array
+     * which has profits for that project. A person with initial capital of c with k as the max number of projects
+     * he/she can invest a money into from the list of projects. Find the max capital he can make.
+     * @param c
+     * @param k
+     * @param capitals
+     * @param profits
+     * @return
+     */
+    public static int maximizeCapital(int c, int k, int[] capitals, int[] profits) {
+        /**
+         * We will maintain a min heap of projects based on capitals
+         * Then we will create a max heap of projects based on profits which the client can invest into bases on his
+         * current capital. This is the key point.
+         * We will select the head from this max heap and the next currentCapital will be incremented by its profit.
+         * Now if k projects has not been covered, we will again go to step 2nd and repeat till we end up investing
+         * in k projects.
+         */
+        PriorityQueue<int[]> minHeap = new PriorityQueue<>((a,b) -> (a[0] - b[0]));
+        int index = 0;
+        for (int capital : capitals) {
+            int[] arr = new int[] {capital, index++};
+            minHeap.offer(arr);
+        }
+
+        PriorityQueue<int[]> maxHeap = new PriorityQueue<>((a,b) -> (b[0] - a[0]));
+        int curCapital = c;
+        int count = 1;
+        while (count < k) {
+            while (!minHeap.isEmpty() && minHeap.peek()[0] <= curCapital) {
+                int[] currArr = minHeap.poll();
+                int[] arr = new int[] {profits[currArr[1]], currArr[1]};
+                maxHeap.offer(arr);
+            }
+            if (maxHeap.isEmpty()) {
+                break;
+            }
+
+            curCapital = curCapital + maxHeap.poll()[0];
+            count++;
+        }
+
+        return curCapital;
+    }
+    /*****************************************************************************************************/
+    /**
+     * Given a set of n tasks, implement tasks method to run in O(nlogn) time that find
+     * the min number of machines required to complete these n tasks.
+     * @param tasksList
+     * @return
+     */
+    public static int tasks(ArrayList<ArrayList<Integer>> tasksList) {
+        // we can use a min heap to store tasks, so the task with min earliest time will be
+        // at the top
+        PriorityQueue<ArrayList<Integer>> minStartTime = new PriorityQueue<>((a,b) -> (a.get(0) - b.get(0)));
+        for (ArrayList<Integer> task : tasksList) {
+            minStartTime.offer(task);
+        }
+
+        PriorityQueue<ArrayList<Integer>> minEndTime = new PriorityQueue<>((a,b) -> (a.get(1) - b.get(1)));
+        minEndTime.offer(minStartTime.poll()); // start the first task
+        int res = minEndTime.size();
+        while (!minStartTime.isEmpty()) {
+            // get the next task
+            ArrayList<Integer> nextTask = minStartTime.poll();
+            // check if can accommodate our task by replacing one of the running tasks
+           if (nextTask.get(0) < minEndTime.peek().get(1)) {
+               // we cannot replace running task, since the new task starts
+               // before the top task in minEndTime heap ends
+               minEndTime.offer(nextTask);
+           } else {
+               // we can replace the task
+               minEndTime.poll();
+               minEndTime.offer(nextTask);
+           }
+           // finally update the res
+           res = Math.max(res, minEndTime.size());
+        }
+        return res;
+    }
+
     /*****************************************************************************************************/
 
     public static void main(String[] args) {
@@ -334,6 +415,31 @@ public class TwoHeaps {
         System.out.println("The median is: " + medianOfAStreamH.findMedian());
         medianOfAStreamH.insertNum(4);
         System.out.println("The median is: " + medianOfAStreamH.findMedian());
+
+        //  Input: A set "tasks_list" of "n" tasks, such that
+        // each taskList has a start time and a finish time
+        List < List < List < Integer >>> inputs = Arrays.asList(Arrays.asList(Arrays.asList(1, 1), Arrays.asList(5, 5), Arrays.asList(8, 8), Arrays.asList(4, 4), Arrays.asList(6, 6), Arrays.asList(10, 10), Arrays.asList(7, 7)), Arrays.asList(Arrays.asList(1, 7), Arrays.asList(1, 7), Arrays.asList(1, 7), Arrays.asList(1, 7), Arrays.asList(1, 7), Arrays.asList(1, 7)), Arrays.asList(Arrays.asList(1, 7), Arrays.asList(8, 13), Arrays.asList(5, 6), Arrays.asList(10, 14), Arrays.asList(6, 7)), Arrays.asList(Arrays.asList(1, 3), Arrays.asList(3, 5), Arrays.asList(5, 9), Arrays.asList(9, 12), Arrays.asList(12, 13), Arrays.asList(13, 16), Arrays.asList(16, 17)), Arrays.asList(Arrays.asList(12, 13), Arrays.asList(13, 15), Arrays.asList(17, 20), Arrays.asList(13, 14), Arrays.asList(19, 21), Arrays.asList(18, 20)));
+        // loop to execute till the length of tasks
+        ArrayList<ArrayList<ArrayList<Integer>>> inputTaskList = new ArrayList<ArrayList<ArrayList<Integer>>>();
+        for(int j = 0; j < inputs.size(); j++)
+        {
+          inputTaskList.add(new ArrayList<ArrayList<Integer>>());
+          for(int k = 0; k < inputs.get(j).size(); k++)
+          {
+            inputTaskList.get(j).add(new ArrayList<Integer>());
+            for(int g = 0; g < inputs.get(j).get(k).size(); g++)
+            {
+              inputTaskList.get(j).get(k).add(inputs.get(j).get(k).get(g));
+            }
+          }
+        }
+        for (int i = 0; i < inputTaskList.size(); i++) {
+          System.out.println(i + 1 + ".\tTask = " + inputTaskList.get(i).toString());
+          // Output: A non-conflicting schedule of tasks in
+          // "tasks_list" using the minimum number of machines
+          System.out.println("\tOptimal number of machines = " + tasks(inputTaskList.get(i)));
+          System.out.println("-------------------------------------------------------------------------------");
+        }
       }
 
 }

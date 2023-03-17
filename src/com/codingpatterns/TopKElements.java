@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.PriorityQueue;
+import java.util.Queue;
 import java.util.Set;
 
 public class TopKElements {
@@ -310,6 +311,133 @@ public class TopKElements {
          }
          return intervalCount;
      }
+
+     /***********************************************************************************************************/
+     public class BinaryTreeNode {
+         public int data;
+         public BinaryTreeNode left;
+         public BinaryTreeNode right;
+
+         // below data members used only for some of the problems
+         public BinaryTreeNode next;
+         public BinaryTreeNode parent;
+         public int count;
+
+         public BinaryTreeNode(int d) {
+             data = d;
+             left = null;
+             right = null;
+             next = null;
+             parent = null;
+             count = 0;
+         }
+     }
+
+     class BinaryTree{
+         public BinaryTreeNode root;
+         
+         public BinaryTree() {
+             this.root = null;
+         }
+
+         public BinaryTree(Integer nodeData) {
+             this.root = new BinaryTreeNode(nodeData);
+         }
+
+         public BinaryTree(List<Integer> nodeDataList) {
+             this.root = null;
+             for (Integer nodeData : nodeDataList) {
+                 insert(nodeData);
+             }
+         }
+         // for BST insertion
+         public void insert(int nodeData) {
+             BinaryTreeNode newNode = new BinaryTreeNode(nodeData);
+             if (this.root == null) {
+                 this.root = newNode;
+             } else {
+                 BinaryTreeNode parent = null;
+                 BinaryTreeNode tempNode = this.root;
+                 while (tempNode != null) {
+                     parent = tempNode;
+                     if (nodeData <= tempNode.data) {
+                         tempNode = tempNode.left;
+                     } else {
+                         tempNode = tempNode.right;
+                     }
+                 }
+                 if (nodeData <= parent.data) {
+                     parent.left = newNode;
+                 } else {
+                     parent.right = newNode;
+                 }
+             }
+         }
+         private BinaryTreeNode findInBSTRec(BinaryTreeNode node, int nodeData) {
+             if (node == null)
+                 return null;
+
+             if (node.data == nodeData) {
+                 return node;
+             } else if (node.data > nodeData) {
+                 return findInBSTRec(node.left, nodeData);
+             } else {
+                 return findInBSTRec(node.right, nodeData);
+             }
+         }
+         public BinaryTreeNode findInBST(int nodeData) {
+             return findInBSTRec(this.root, nodeData);
+         }
+         public int getSubTreeNodeCount(BinaryTreeNode node) {
+             if (node == null) {
+                 return 0;
+             } else {
+                 return 1 + getSubTreeNodeCount(node.left) + getSubTreeNodeCount(node.right);
+             }
+         }
+         private BinaryTreeNode getTreeDeepCopyRec(BinaryTreeNode node) {
+             if (node != null) {
+                 BinaryTreeNode newNode = new BinaryTreeNode(node.data);
+                 newNode.left = getTreeDeepCopyRec(node.left);
+                 newNode.right = getTreeDeepCopyRec(node.right);
+                 return newNode;
+             } else {
+                 return null;
+             }
+         }
+         public BinaryTree getTreeDeepCopy() {
+             if (this.root == null) {
+                 return null;
+             } else {
+                 BinaryTree treeCopy = new BinaryTree();
+                 treeCopy.root = getTreeDeepCopyRec(root);
+                 return treeCopy;
+             }
+         }
+     }
+     /**
+      * Given the root node of a binary search tree and an integer value k, return the kth
+         smallest value from all the nodes of the tree.
+      * @author damanjits
+      *
+      */
+      public static int kthSmallestElement(BinaryTreeNode root, int k) {
+         // Traverse the BST inorder and store the values in a list so the list will be sorted
+          List<Integer> values = new ArrayList<>();
+          inorder(root, values);
+          System.out.println(values.toString());
+
+          // We have a sorted list, the kth smallest will be the element at k-1th position
+          return values.get(k-1);
+       }
+
+      private static void inorder(BinaryTreeNode node, List<Integer> values) {
+          if (node == null) return;
+
+          inorder(node.left, values);
+          values.add(node.data);
+          inorder(node.right, values);
+      }
 
      /***********************************************************************************************************/
 

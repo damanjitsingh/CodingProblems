@@ -101,3 +101,61 @@ on handling write operations. On the other hand SAVE operation will not cause an
 ![BTree](resources/images/BTreeIndex.png)
 -  The advantage of BTree is that we do not need to do compaction and merging as we do not have multiple values of a single key stored in the pages. On the other hand the advantage of LSM Index approach is faster write throughput as we only need to append a new write at the end of the file. In BTrees write amplification is high as we need to first write to Write Ahead Log then to disk.
 - LSM trees can be compressed better leaving lesser footprint compared to BTrees
+
+
+## Design a Unique ID Generator in Distributed Systems
+
+### Requirements:
+- IDs contains only numbers.
+- Size should not exceed 64 bit.
+- IDs can be sorted based on their time stamps or the time when those are generated.
+- System can generate minimum of 10K IDs per second.
+
+### Design considerations
+- On a single system we can use auto increment feature of SQL databases if we need to generate unique IDs for storage systems. But this approach will not work on 
+application running on different nodes. We will have collisions.
+- One approach to make it work on distributed data storage systems is to increment the id by number of servers + 1. For example if we have 3 servers then the id will be
+incremented by 3 on each server so server1 will generate IDs like 1,4,7 and server2 will have IDs as 2,5,8 and so on. This approach will not work well if we need to add or remove a server from the system. Additionally this approach will not necessarily have IDs generated in increasing order fashion so that they can be sorted by time of the request or an event.
+- We can follow an approach similar to how Twitter implemented their ID generator called Snowflake.
+- 64 bits can be divided into several segments. First 41 bits can be used for timestamp, next 5 bits can be used for datacenter ID and next 5 for machine ID, last 12 bits can be used for generating a sequence number incrementally. For example refer to below figure:
+![64bitID](resources/images/64bitID.png)
+- Sequence number is 12 bits, which give us 2 ^ 12 = 4096 combinations. This field is 0 unless more than one ID is generated in a millisecond on the same server. In theory, a machine can support a maximum of 4096 new IDs per millisecond.
+- In our implementation we can use `System.currentTimeMillis()` to get the current time in milliseconds and subtract the pre decided epoch (e.g. twiiter epoch value was 1288834974657) and convert it to binary to get the 41 bit value that needs to be stored in the ID.
+- Since you can generate 4096 sequences per ms on a single machine per process, Our system easily satisfies the criteria of a atleast 10K IDs per second.
+- Last, our current system will work for 69 years as (2^41/(1000*565*24*3600)) ~= 69 from the epoch start (which used here is Nov 04, 2010 1:42:54 UTC).
+
+## Design a URL shortener like tinyURL
+
+### Requirements:
+- Assuming URL https://www.systeminterview.com/q=chatsystem&c=loggedin&v=v3&l=long your system creates an alias with shorter length: https://tinyurl.com/ y7keocwj.
+If you click the alias it redirects you to the original URL. The hash value of the shortened URL contains characters from [0-9], [a-z] and [A-Z].
+- Traffic volume: 100 million URLs are generated per day
+
+### Back of the envelope estimation:
+- Number of write operations per second is (100 mil)/ (24 * 3600) = 1160
+- Number or read operations per second assuming 10:1 read/write ration = 11600
+- Assuming our service runs for 10 years then we must support (100mil * 365 * 10) = 365 billion records
+- Assuming average URL length of 100bytes, total storage requirement is (365 bil * 100) =  36 TB
+
+### High level design
+- There can be two APIs for our service. The first API shortens the long URL. Something like `POST urlshorten/v1/{longURL}` and this returns the short URL in the form of https://www.tinyurl/45xc3zy where (45xc3zy is some hash value).
+- The second API is about redirecting the short URL to the actual URL. This API can be called like `GET urlredirect/v1/{shortURL}` and the response contains 301 status code with the value of the long URL in the `location` attribute.
+- Other than that we need to have a hash function that converts the long URL to the short value. This hash function should generate a unique hash value corresponding to the long URL.
+
+![URLShortenHash](resources/images/URLShortenHash.png)
+
+### Design deep dive
+- We will use base 65 hash to convert long URL (in fact we use a unique ID and apply base 62 on it) to a short URL.
+- First for our hash function we need to find the maximum length we need for the short URL. Since we can use characters (0-9,a-z,A-Z) there are 62 characters in total.
+We also know that we need 365 billion records in total. So the maximum n required to represent 365 bil records with 62 different characters are given by 62^n > 365 * 10^9, which when calculated comes out to be 7.
+- A unique ID generator will generate a unique ID for each long URL and we use base 62 conversion on that id to generate short URL. For example if the long URL is `https://en.wikipedia.org/wiki/Systems_design`, and assume unique ID generator gives ID as `2009215674938`. Base 62 value of this ID is `zn9edcu` so the short URL will be
+`https://www.tinyURL/zn9edcu`.
+- Below you will find a design diagram of URL shortening and redirecting operation:
+
+URL shortening:
+
+![URLShortening](resources/images/URLShortening.png)
+
+URL redirecting:
+
+![URLRedirecting](resources/images/URLRedirecting.png)

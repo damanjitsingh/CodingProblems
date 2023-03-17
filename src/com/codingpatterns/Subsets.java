@@ -1,11 +1,14 @@
 package com.codingpatterns;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class Subsets {
+    
+    /*****************************************************************************************************/
     /**
      * For a given number ‘N’, write a function to generate all combination of ‘N’ pairs of balanced parentheses.
      * Input: N=2
@@ -13,6 +16,13 @@ public class Subsets {
       Input: N=3
       Output: ((())), (()()), (())(), ()(()), ()()()
      * @param n
+     * 
+     * What is the time and space complexity of below implemented method.
+     * Time complexity is O(n*2^n) where n is the number of pairs. 2^n are the max number of such pairs (although for balanced paranthesis this will be less).
+     * We multiplied by n as string append happens in O(n) time for a string.
+     * Space complexity is O(2^n)
+     * 
+     * 
      * @return
      */
     static class BracketString {
@@ -46,10 +56,85 @@ public class Subsets {
         return res;
     }
 
+    /*****************************************************************************************************/
+    /**
+     * Given a set with distinct elements, find all of its distinct subsets.
+     * Input: [1, 3]
+        Output: [], [1], [3], [1,3]
+     * @param nums
+     * @return
+     * 
+     * Time Complexity is O(n* 2^n): 
+     * Since, in each step, the number of subsets doubles as we add each element to all the existing subsets,
+     * therefore, we will have a total of O(2^N) O(2^N) subsets, where ‘N’ is the total number of elements in
+     * the input set. And since we construct a new subset from an existing set, therefore, the time complexity
+     * of the above algorithm will be O(N*2^N)O(N∗2N).
+     * Space Complexity is O(n*2^n)
+     */
+    public static List<List<Integer>> findSubsets(int[] nums) {
+        List<List<Integer>> subsets = new ArrayList<>();
+        subsets.add(new ArrayList<Integer>());
+
+        for (int num : nums) {
+            int subsetsSize = subsets.size();
+            for (int i=0 ; i<subsetsSize; i++) {
+                List<Integer> newSubset = new ArrayList<>(subsets.get(i));
+                newSubset.add(num);
+                subsets.add(newSubset);
+            }
+        }
+        return subsets;
+      }
+    
+    /*****************************************************************************************************/
+    /**
+     * Given a set of distinct numbers, find all of its permutations.
+     * Permutation is defined as the re-arranging of the elements of the set. For example, {1, 2, 3} has the following six permutations:
+
+        {1, 2, 3}
+        {1, 3, 2}
+        {2, 1, 3}
+        {2, 3, 1}
+        {3, 1, 2}
+        {3, 2, 1}
+     * @param nums
+     * @return
+     * Time complexity is O(n*n!), we multiply by n because inserting an element into a list takes O(n) time.
+     * Space complexity is O(n*n!)
+     */
+    public static List<List<Integer>> findPermutations(int[] nums) {
+        List<List<Integer>> subsets = new ArrayList<>();
+        List<List<Integer>> result = new ArrayList<>();
+        subsets.add(new ArrayList<Integer>());
+
+        for (int num : nums) {
+            int subsetsSize = subsets.size();
+            for (int i=0 ; i<subsetsSize; i++) {
+                List<Integer> curList = subsets.get(i);
+                for (int k=0; k<=curList.size(); k++) {
+                    List<Integer> newSubset = new ArrayList<>(curList);
+                    newSubset.add(k, num);
+                    subsets.add(newSubset);
+                    if (newSubset.size() == nums.length) {
+                        result.add(newSubset);
+                    }
+                }
+            }
+        }
+        return result;
+      }
+
+    /*****************************************************************************************************/
+    
     public static void main(String[] args) {
         System.out.println("Combination of " + 3 + " pairs of balanced parentheses are: " + generateBalancedParenthesis(3).toString());
         System.out.println("Combination of " + 2 + " pairs of balanced parentheses are: " + generateBalancedParenthesis(2).toString());
         System.out.println("Combination of " + 1 + " pairs of balanced parentheses are: " + generateBalancedParenthesis(1).toString());
+
+
+        System.out.println(findSubsets(new int[] {1,3}).toString());
+        int[] arr = new int[] {1,2,3};
+        System.out.println("All permutations of " + Arrays.toString(arr) + " are: " + findPermutations(arr).toString());
     }
 
 }
