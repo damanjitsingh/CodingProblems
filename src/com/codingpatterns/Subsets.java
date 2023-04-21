@@ -125,6 +125,69 @@ public class Subsets {
       }
 
     /*****************************************************************************************************/
+    protected static final String[] arr = new String[] {"", "", "abc", "def", "ghi", "jkl", "mno", "pqrs", "tuv", "wxyz"};
+
+    public List<String> letterCombinationsUsingRecursion(String digits) {
+        // if input is 456
+        // then possible outcomes are {"gjm", "gjn", "gjo"....};
+        // lets use the backtracking recursion approach
+        List<String> res = new ArrayList<>();
+        constructLetters(digits, 0, res, "");
+        return res;
+     }
+    
+    private static void constructLetters(String digits, int digitIndex, List<String>res, String currentString) {
+        if (digitIndex >= digits.length()) {
+            return;
+        }
+
+        int digitValue = (int) (digits.charAt(digitIndex) - '0'); // get the value of digit at digitIndex
+        String s = Subsets.arr[digitValue]; // get the corresponding string from the phone book
+
+        if (digitIndex == digits.length() - 1) {
+            // we need to append each character of the digit
+            for (int i=0; i<s.length(); i++) {
+                res.add(currentString + s.charAt(i));
+            }
+            return;
+        }
+
+        // for all other digits prior to last digit
+        for (int i=0; i<s.length(); i++) {
+            constructLetters(digits, digitIndex+1, res, currentString + s.charAt(i));
+        }
+    }
+
+    // The time complexity is O(k^n * n) where n is the length of the digits and k is the length of the max mapped string (here it is 4)
+    // it is multiplied by n as the final elements in the res is of length n.
+    // The space complexity is O(n.k) where n is the total number of input digits, and  k is the maximum number of letters mapped to any digit.
+    public List<String> letterCombinationsUsingSubsets(String digits) {
+        List<String> res = new ArrayList<>();
+
+        for (int i=0; i<digits.length(); i++) {
+            int digitValue = (int) (digits.charAt(i) - '0');
+            String digitString = Subsets.arr[digitValue];
+            if (res.size() == 0) {
+                // If the res list is empty we will just add all the characters of the first digit, e.g. if first digit is 3, res = {"d", "e", "f"}
+                for (char c : digitString.toCharArray()) {
+                    res.add("" + c);
+                }
+            } else {
+                // if res is not empty, then for each element of res , we will append characters of the given digit
+                // e.g. if the second digit is 4 then res = {"dg", "dh", "di", "eg", "eh", "ei", "fg", "fh", "fi"}
+                List<String> newList = new ArrayList<>();
+                for (String s : res) {
+                    for (char c : digitString.toCharArray()) {
+                        newList.add(s + c);
+                    }
+                }
+                res = newList;
+            }
+        }
+        return res;
+    }
+
+    /*****************************************************************************************************/
     
     public static void main(String[] args) {
         System.out.println("Combination of " + 3 + " pairs of balanced parentheses are: " + generateBalancedParenthesis(3).toString());

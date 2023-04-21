@@ -74,7 +74,31 @@ timestamp from Redis cache. Based on the response, the rate limiter decides:
 - if the request is rate limited, the rate limiter returns 429 too many requests error to
 the client. In the meantime, the request is either dropped or forwarded to the queue.
 
+## Database concepts
+
+- Relational Databases (RDs) are suitable for structured data. With the already established SQL language it is easy to query data out of several tables. RDs are ACID (Atomicity, Consistency, Isolation and Durability) compliant.
+- On the other hand NoSQL databases are suitable for storing unstructured or semi-structured data. Well suited for scalable applications because of their horizontal scaling capabilities.
+
+### Replicaton
+
+- When we talk about databases, an important point to know about is the replication. Replication is the process of storing data in multiple servers so that we do not lose data in case of server failures.
+- There are mainly three models/topologies of replication.
+
+    - Single leader: In this model there is one leader node that accepts the write request (other are replica or follower nodes that do not accept write request). Once the write request reaches to the leader, it first updates its local copy of the data and then it signal the followers to update their copies (or database files). Once all the followers signal the write success the leader then respond back to the client about the success of the operation. The mode which we talked here is called Synchronous mode of operation where leader waits for all the followers to respond first. But this mode can be slow if there are frequent writes and one of the follower shuts down for some reason, in this case the entire write operation has to wait for the follower to recover before the system takes the next read/write request from the client. There is another mode called asynchronous communication.In this mode leader does not wait for the response from the followers, it updates the data locally and signal followers to update their copy but signals client about the operation success without waiting for the followers. The advantage of this mode is that it is fast, but this mode has to deal with data inconsistency as some followers might not have updated data before another write request comes in. The disadvantage of single leader model is that there is a single point of failure as there is only one leader. What if the leader shuts down, the write operations might get lost permanently. There are primarily three methods to replicate data from leader to followers:
+
+        - Statement based replication: Each SQL write statement is sent to the followers. The disadvantage of this technique is the data inconsistency caused by the presence of non deterministic operations in the request. One example is the `Now` command.
+        - Write Ahead Log (WAL): In this method leader first write the data changes (which the database servers usually do before applying the changes to the database) and its related metadata in WAL. This WAL log is then transmitted to the followers. Below is an example of how a transaction in WAL looks like: ***Transaction ID: 12345
+                Timestamp: 2023-03-28 15:30:00
+                Action: UPDATE
+                Table: customers
+                Record ID: 123
+                New Name: John Smith***
+        - Logical row based replication:
+    - Multiple leader: This model overcomes the disadvantage we discussed in the single leader model. Here we have multiple leaders that can handle write request simultaneously. So ther is no single point of failure. But the added complexity of multiple leaders can cause issues of consistency of data among one another. Here each leader not only sends signals to followers but to other leaders as well, the other leaders than has to make sure to update the data based on the request timestamps.
+    - Leaderless (peer to peer): In this model there is no leader. Every server can handle write request and sends the signal to update the data to other servers. In this approach we make use of Quoram technique to make sure data is consistent.
+
 ## Redis Design Notes
+
 - There are two ways Redis uses to persist data. One is using snapshots and other is using AoF (Append only File).
 - With snapshots we can tell Redis to take a snapshot of the data at regular intervals (say 3am daily or after 1 hour). BGSAVE and SAVE are the commands
 used to tell Redis to initiate a snapshot. With BGSAVE a new forked process will take care of creating a snapshot of the data whereas the main process keeps
